@@ -2,7 +2,7 @@ import os
 import requests
 
 ESP_BASE = "https://developer.sepush.co.za/business/3.1"
-ESP_TOKEN = os.getenv("ESKOMSEPUSH_API_KEY")
+ESP_TOKEN = os.environ.get("ESP_TOKEN")
 
 def _headers() -> dict:
     return {"token": ESP_TOKEN}
