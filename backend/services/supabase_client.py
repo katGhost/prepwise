@@ -105,14 +105,14 @@ def get_budget_categories(household_id: str) -> list[dict]:
     return resp.data
 
 
-def create_event(household_id: str, event_type: str) -> dict:
-
+def create_event(household_id: str, event_type: str, outage_status: str = "unknown", stage: int = 0) -> dict:
+    import datetime, uuid
     event = {
-        "id": str(uuid.uuid4()),
+        "id":           str(uuid.uuid4()),
         "household_id": household_id,
-        "type": event_type,
-        "status": "active",
-        "created_at": datetime.datetime.utcnow().isoformat() + "Z",
+        "type":         event_type,
+        "status":       outage_status,  # now carries real ESP status
+        "created_at":   datetime.datetime.utcnow().isoformat() + "Z",
     }
     client = get_client()
     if client is None:
