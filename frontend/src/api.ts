@@ -35,6 +35,20 @@ export type DisruptionEvent = {
   created_at: string;
 };
 
+export type Notification = {
+  id: string;
+  household_id: string;
+  message: string;
+  source_area: string;
+  read: boolean;
+  created_at: string;
+};
+
+export type AreaOption = {
+  id: string;
+  name: string;
+};
+
 // auth header helper
 async function authHeaders(): Promise<HeadersInit> {
   const { data } = await supabase.auth.getSession();
@@ -90,5 +104,33 @@ export const api = {
       headers,
       body: JSON.stringify({ event_type: eventType }),
     }).then((r) => json<InsightResponse>(r));
+  },
+   getAreas: async () => {
+    return fetch("/api/areas/").then((r) =>
+      json<{ areas: AreaOption[] }>(r)
+    );
+  },
+
+  setArea: async (area_id: string) => {
+    const headers = await authHeaders();
+    return fetch("/api/areas/me", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ area_id }),
+    }).then((r) => json<{ ok: boolean; area_id: string }>(r));
+  },
+
+  getNotifications: async () => {
+    const headers = await authHeaders();
+    return fetch("/api/notifications/me", { headers }).then((r) =>
+      json<{ notifications: Notification[]; unread: number }>(r)
+    );
+  },
+
+  markNotificationsRead: async () => {
+    const headers = await authHeaders();
+    return fetch("/api/notifications/read", { method: "POST", headers }).then(
+      (r) => json<{ ok: boolean }>(r)
+    );
   },
 };
