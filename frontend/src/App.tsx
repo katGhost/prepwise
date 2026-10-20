@@ -12,6 +12,8 @@ export default function App() {
     const [events, setEvents] = useState<DisruptionEvent[]>([]);
     const [insight, setInsight] = useState<InsightResponse | null>(null);
     const [loading, setLoading] = useState(false);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     // auth state listener
     useEffect(() => {
@@ -22,12 +24,19 @@ export default function App() {
         return () => subscription.unsubscribe();
     }, []);
 
-    // load household data once logged in
+    // load household data once logged in ->
+    // pull notifications
     useEffect(() => {
         if (!session) return;
         api.getHousehold().then((h) => setHouseholdName(h.name));
         api.getBudget().then((b) => setCategories(b.categories));
         api.listEvents().then((e) => setEvents(e.events));
+
+        // session notifications
+        api.getNotifications().then((n) => {
+            setNotifications(n.notifications);
+            setUnreadCount(n.unread);
+        });
     }, [session]);
 
     // auth gate
@@ -36,15 +45,23 @@ export default function App() {
     async function handleTrigger(eventType: "electricity" | "water") {
         setLoading(true);
         try {
-        const event = await api.triggerEvent(eventType);
-        setEvents((prev) => [event, ...prev]);
-        const result = await api.getInsight(eventType);
-        setInsight(result);
+            const event = await api.triggerEvent(eventType);
+            setEvents((prev) => [event, ...prev]);
+            const result = await api.getInsight(eventType);
+            setInsight(result);
         } finally {
-        setLoading(false);
+            setLoading(false);
         }
     }
 
+    // handle marking notifications done
+    async function handleMarkNotificationsRead() {
+        await api.markNotificationsRead();
+        setUnreadCount(0);
+        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    }
+
+    // signout
     async function handleSignOut() {
         await supabase.auth.signOut();
         setInsight(null);
@@ -58,6 +75,9 @@ export default function App() {
         impactByCategory: typeof impactByCategory;
         events: DisruptionEvent[];
         insight: InsightResponse | null;
+        notifications: Notification[];
+        unreadCount: number;
+        onMarkNotificationsRead: () => Promise<void>;
         loading: boolean;
         onTrigger: (eventType: "electricity" | "water") => Promise<void>;
     }>;
@@ -99,6 +119,9 @@ export default function App() {
                 impactByCategory={impactByCategory}
                 events={events}
                 insight={insight}
+                notifications={notifications}
+                unreadCount={unreadCount}
+                onMarkNotificationsRead={handleMarkNotificationsRead}
                 loading={loading}
                 onTrigger={handleTrigger}
             />
