@@ -11,7 +11,8 @@ import logging
 from flask import Flask, jsonify, send_from_directory
 
 from config import Config
-from routes import events, household, insights
+from routes import events, household, insights, areas, notifications
+from scheduler import start_scheduler
 
 
 def create_app() -> Flask:
@@ -23,6 +24,8 @@ def create_app() -> Flask:
     app.register_blueprint(household.bp)
     app.register_blueprint(events.bp)
     app.register_blueprint(insights.bp)
+    app.register_blueprint(areas.bp)
+    app.register_blueprint(notifications.bp)
 
     @app.get("/api/health")
     def health():
@@ -46,4 +49,5 @@ def create_app() -> Flask:
 app = create_app()
 
 if __name__ == "__main__":
+    start_scheduler()
     app.run(host="0.0.0.0", port=Config.PORT, debug=Config.FLASK_ENV != "production")
