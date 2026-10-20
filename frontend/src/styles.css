@@ -1,0 +1,331 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
+@import url("https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css");
+
+/*
+  Design tokens
+  Palette aligned with LoginScreen: deep navy page, teal green accent,
+  amber for warnings, coral for high severity.
+*/
+:root {
+  --page: #0b141d;
+  --surface: #111e29;
+  --surface-raised: #172733;
+  --border: #293b47;
+  --text: #f1f6f8;
+  --text-muted: #99aab6;
+  --green: #00d477;
+  --green-dim: rgba(0, 212, 119, 0.12);
+  --amber: #f3bf62;
+  --amber-dim: rgba(243, 191, 98, 0.10);
+  --danger: #e05c3a;
+  --danger-dim: rgba(224, 92, 58, 0.10);
+  --font-ui: "DM Sans", system-ui, -apple-system, sans-serif;
+  --font-display: "Manrope", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--text);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 24px 20px 64px;
+}
+
+/* Header */
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.header h1 {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin: 0 0 4px;
+}
+
+.header h1 .brand-white {
+  color: var(--text);
+}
+
+.header h1 .brand-green {
+  color: var(--green);
+}
+
+.header .subtitle {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+/* Status chip */
+
+.status-chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  color: var(--green);
+  white-space: nowrap;
+  background: var(--green-dim);
+}
+
+.status-chip.alert {
+  color: var(--amber);
+  border-color: rgba(243, 191, 98, 0.30);
+  background: var(--amber-dim);
+}
+
+/* Section label */
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 28px 0 10px;
+}
+
+.section-label:first-of-type {
+  margin-top: 0;
+}
+
+/* Budget cards */
+
+.budget-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.budget-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: border-color 0.25s ease;
+}
+
+.budget-card.impacted {
+  border-color: var(--category-color, var(--amber));
+}
+
+.budget-card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.budget-card-category {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.budget-card-amounts {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.budget-bar-track {
+  height: 6px;
+  background: var(--page);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.budget-bar-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.budget-bar-fill.warn {
+  background: var(--amber);
+}
+
+.budget-bar-fill.danger {
+  background: var(--danger);
+}
+
+.budget-bar-projection {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(224, 92, 58, 0.55),
+    rgba(224, 92, 58, 0.55) 3px,
+    transparent 3px,
+    transparent 6px
+  );
+}
+
+.impact-note {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.impact-note strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.impact-action {
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--amber);
+  font-weight: 600;
+}
+
+/* Insight panel */
+
+.insight-panel {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--amber);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 8px;
+}
+
+.insight-panel .insight-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--amber);
+  margin-bottom: 8px;
+}
+
+.insight-panel .insight-text {
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+/* Demo controls */
+
+.controls {
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.controls-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.controls-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+button.sim-btn {
+  flex: 1;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+button.sim-btn:hover:not(:disabled) {
+  border-color: var(--green);
+  background: var(--green-dim);
+  color: var(--green);
+}
+
+button.sim-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Sign out button */
+
+.signout-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.signout-btn:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* Event feed */
+
+.feed-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 2px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.feed-item:last-child {
+  border-bottom: none;
+}
+
+.feed-item-type {
+  text-transform: capitalize;
+  font-weight: 600;
+}
+
+.feed-item-time {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.empty-feed {
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 8px 2px;
+}
