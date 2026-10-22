@@ -2,36 +2,59 @@
 @import url("https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css");
 
 /*
-  Design tokens
-  Palette aligned with LoginScreen: deep navy page, teal green accent,
-  amber for warnings, coral for high severity.
+  Global design tokens
+  Single source of truth for colour, type, and surface.
+  All component files consume these; never redeclare them elsewhere.
 */
 :root {
-  --page: #0b141d;
-  --surface: #111e29;
+  /* Surfaces */
+  --page:           #0b141d;
+  --surface:        #111e29;
   --surface-raised: #172733;
-  --border: #293b47;
-  --text: #f1f6f8;
+  --border:         #293b47;
+
+  /* Text */
+  --text:       #f1f6f8;
   --text-muted: #99aab6;
-  --green: #00d477;
-  --green-dim: rgba(0, 212, 119, 0.12);
-  --amber: #f3bf62;
-  --amber-dim: rgba(243, 191, 98, 0.10);
-  --danger: #e05c3a;
+
+  /* Accent */
+  --green:      #00d477;
+  --green-dim:  rgba(0, 212, 119, 0.12);
+  --amber:      #f3bf62;
+  --amber-dim:  rgba(243, 191, 98, 0.10);
+  --danger:     #e05c3a;
   --danger-dim: rgba(224, 92, 58, 0.10);
-  --font-ui: "DM Sans", system-ui, -apple-system, sans-serif;
+
+  /* Blue for water service */
+  --blue:     #60a5fa;
+  --blue-dim: rgba(96, 165, 250, 0.12);
+
+  /* Typography */
+  --font-ui:      "DM Sans", system-ui, -apple-system, sans-serif;
   --font-display: "Manrope", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+
+  /* Radii */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+
+  /* Layout */
+  --nav-h:    64px;
+  --header-h: 52px;
 }
+
+/* Reset */
 
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
   background: var(--page);
   color: var(--text);
   font-family: var(--font-ui);
@@ -39,55 +62,22 @@ body {
 }
 
 #root {
-  margin: 0 auto;
   min-height: 100vh;
-  padding: 24px 20px 64px;
 }
 
-/* Header */
-
-.header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 28px;
-}
-
-.header h1 {
-  font-family: var(--font-display);
-  font-size: 19px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  margin: 0 0 4px;
-}
-
-.header h1 .brand-white {
-  color: var(--text);
-}
-
-.header h1 .brand-green {
-  color: var(--green);
-}
-
-.header .subtitle {
-  color: var(--text-muted);
-  font-size: 13px;
-  margin: 0;
-}
-
-/* Status chip */
+/* Status chip - shared between header and login screen */
 
 .status-chip {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.05em;
-  padding: 5px 10px;
-  border-radius: 6px;
+  padding: 3px 10px;
+  border-radius: 20px;
   border: 1px solid var(--border);
-  color: var(--green);
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
   white-space: nowrap;
-  background: var(--green-dim);
 }
 
 .status-chip.alert {
@@ -96,64 +86,19 @@ body {
   background: var(--amber-dim);
 }
 
-/* Section label */
-
-.section-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin: 28px 0 10px;
+.status-chip.ok {
+  color: var(--green);
+  border-color: rgba(0, 212, 119, 0.25);
+  background: var(--green-dim);
 }
 
-.section-label:first-of-type {
-  margin-top: 0;
-}
-
-/* Budget cards */
-
-.budget-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.budget-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px 16px;
-  transition: border-color 0.25s ease;
-}
-
-.budget-card.impacted {
-  border-color: var(--category-color, var(--amber));
-}
-
-.budget-card-top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.budget-card-category {
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: capitalize;
-}
-
-.budget-card-amounts {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--text-muted);
-}
+/* Budget bar - shared between BudgetCard and outage log */
 
 .budget-bar-track {
-  height: 6px;
-  background: var(--page);
-  border-radius: 3px;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 2px;
   overflow: hidden;
   position: relative;
 }
@@ -161,17 +106,13 @@ body {
 .budget-bar-fill {
   height: 100%;
   background: var(--green);
-  border-radius: 3px;
-  transition: width 0.5s ease;
+  border-radius: 2px;
+  transition: width 0.4s ease;
 }
 
-.budget-bar-fill.warn {
-  background: var(--amber);
-}
-
-.budget-bar-fill.danger {
-  background: var(--danger);
-}
+.budget-bar-fill.warn   { background: var(--amber); }
+.budget-bar-fill.over,
+.budget-bar-fill.danger { background: var(--danger); }
 
 .budget-bar-projection {
   position: absolute;
@@ -185,6 +126,64 @@ body {
     transparent 6px
   );
 }
+
+/* Severity tags */
+
+.severity-tag {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.severity-low      { background: var(--green-dim); color: var(--green); }
+.severity-moderate { background: var(--amber-dim); color: var(--amber); }
+.severity-high     { background: var(--danger-dim); color: var(--danger); }
+
+/* Service icons (electricity / water) */
+
+.service-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.electricity-icon { background: var(--amber-dim);  color: var(--amber); }
+.water-icon       { background: var(--blue-dim);   color: var(--blue); }
+
+/* Insight panel */
+
+.insight-panel {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--amber);
+  border-radius: var(--r-lg);
+  padding: 18px;
+  margin-bottom: 8px;
+}
+
+.insight-panel .insight-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--amber);
+  margin-bottom: 8px;
+}
+
+.insight-panel .insight-text {
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+/* Impact note (budget card detail) */
 
 .impact-note {
   margin-top: 10px;
@@ -205,115 +204,22 @@ body {
   font-weight: 600;
 }
 
-/* Insight panel */
-
-.insight-panel {
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--amber);
-  border-radius: 12px;
-  padding: 18px;
-  margin-bottom: 8px;
-}
-
-.insight-panel .insight-label {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--amber);
-  margin-bottom: 8px;
-}
-
-.insight-panel .insight-text {
-  font-size: 14.5px;
-  line-height: 1.7;
-  color: var(--text);
-}
-
-/* Demo controls */
-
-.controls {
-  background: var(--surface);
-  border: 1px dashed var(--border);
-  border-radius: 12px;
-  padding: 14px 16px;
-}
-
-.controls-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 10px;
-}
-
-.controls-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-button.sim-btn {
-  flex: 1;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 600;
-  padding: 10px 12px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease;
-}
-
-button.sim-btn:hover:not(:disabled) {
-  border-color: var(--green);
-  background: var(--green-dim);
-  color: var(--green);
-}
-
-button.sim-btn:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-/* Sign out button */
-
-.signout-btn {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 5px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: border-color 0.2s ease, color 0.2s ease;
-}
-
-.signout-btn:hover {
-  border-color: var(--danger);
-  color: var(--danger);
-}
-
-/* Event feed */
+/* Event feed items */
 
 .feed-item {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 10px 2px;
   border-bottom: 1px solid var(--border);
   font-size: 13px;
 }
 
-.feed-item:last-child {
-  border-bottom: none;
-}
-
+.feed-item:last-child  { border-bottom: none; }
 .feed-item-type {
+  display: flex;
+  gap: 10px;
+  align-items: center;
   text-transform: capitalize;
   font-weight: 600;
 }
@@ -328,4 +234,123 @@ button.sim-btn:disabled {
   color: var(--text-muted);
   font-size: 13px;
   padding: 8px 2px;
+}
+
+/* Primary button */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: var(--green);
+  color: var(--page);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-top: 8px;
+}
+
+.btn-primary:disabled           { opacity: 0.4; cursor: not-allowed; }
+.btn-primary:hover:not(:disabled) { opacity: 0.88; }
+
+/* Sim / secondary buttons */
+
+.sim-btn {
+  flex: 1;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.sim-btn:hover:not(:disabled) {
+  border-color: var(--green);
+  background: var(--green-dim);
+  color: var(--green);
+}
+
+.sim-btn:disabled { opacity: 0.45; cursor: default; }
+
+/* Text link */
+
+.text-link {
+  background: none;
+  border: none;
+  color: var(--green);
+  font-size: 12px;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.text-link:hover { opacity: 0.8; }
+
+/* Icon button (header actions) */
+
+.icon-button {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 15px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.icon-button:hover {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Sign out button variant */
+
+.signout-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.signout-btn:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* Utility colour classes */
+
+.text-green  { color: var(--green); }
+.text-amber  { color: var(--amber); }
+.text-danger { color: var(--danger); }
+.text-muted  { color: var(--text-muted); }
+
+/* Reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; }
 }
