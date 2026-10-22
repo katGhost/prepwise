@@ -1,0 +1,27 @@
+/* .feed-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+} */
+
+
+
+
+.btn-mark-resolved {
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 7px;
+  background: var(--blue-dim);
+  color: whitesmoke;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.btn-mark-resolved:hover {
+  background: var(--green);
+  color: var(--page);
+}
+
+.btn-mark-resolved:focus {
+  background: var(--green-dim);
+}

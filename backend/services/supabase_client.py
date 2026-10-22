@@ -9,7 +9,7 @@ end if Supabase isn't reachable (flaky wifi on demo day, sandbox access not
 confirmed yet, etc). The mock mirrors the real schema exactly so swapping
 back to real Supabase is a one-line change (see get_client()).
 """
-import datetime
+from datetime import datetime
 import uuid
 from config import Config
 from supabase import create_client
@@ -83,9 +83,9 @@ def get_household(household_id: str) -> dict | None:
     client = get_client()
     if client is None:
         return MOCK_HOUSEHOLD if household_id == MOCK_HOUSEHOLD["id"] else None
-    
+
     resp = (client.table("households")
-        .select("*")
+        .select("id, name")
         .eq("id", household_id)
         .single()
         .execute())
@@ -105,21 +105,28 @@ def get_budget_categories(household_id: str) -> list[dict]:
     return resp.data
 
 
-def create_event(household_id: str, event_type: str, outage_status: str = "unknown", stage: int = 0) -> dict:
-    import datetime, uuid
-    event = {
-        "id":           str(uuid.uuid4()),
-        "household_id": household_id,
-        "type":         event_type,
-        "status":       outage_status,  # now carries real ESP status
-        "created_at":   datetime.datetime.utcnow().isoformat() + "Z",
-    }
+def create_event(household_id: str, event_type: str, outage_status: str, stage: int) -> dict:
     client = get_client()
-    if client is None:
-        MOCK_EVENTS.append(event)
-        return event
-    resp = client.table("events").insert(event).execute()
-    return resp.data[0]
+    result = (
+        client.table("events")
+        .insert({
+            "household_id": household_id,
+            "type":         event_type,
+            "status":       "active",       # lifecycle — always starts active
+            "outage_status": outage_status, # ESP snapshot
+            "stage":         stage,
+        })
+        .execute()
+    )
+    return result.data[0]
+
+
+"""client = get_client()
+if client is None:
+    MOCK_EVENTS.append(event)
+    return event
+resp = client.table("events").insert(event).execute()
+return resp.data[0]"""
 
 
 def list_events(household_id: str) -> list[dict]:
@@ -173,6 +180,7 @@ def save_insight(event_id: str, text: str) -> None:
     if client is None:
         return
     client.table("insights").insert({"event_id": event_id, "content": text}).execute()
+
     
 def write_outage_cache(area_id: str, area_name: str, status: str, stage: int, raw: dict | None) -> None:
     client = get_client()
@@ -188,20 +196,21 @@ def write_outage_cache(area_id: str, area_name: str, status: str, stage: int, ra
     }).execute()
 
 def get_outage_status(area_id: str) -> dict:
-    """Read cached outage status for an area. Falls back to unknown."""
-    from services.area_config import resolve_area_id
-    parent_id = resolve_area_id(area_id)
     client = get_client()
-    if client is None:
-        return {"status": "unknown", "stage": 0}
-    resp = (
+    result = (
         client.table("outage_cache")
-        .select("status,stage,fetched_at")
-        .eq("area_id", parent_id)
-        .limit(1)
+        .select("status, stage")
+        .eq("area_id", area_id)
+        .single()
         .execute()
     )
-    return resp.data[0] if resp.data else {"status": "unknown", "stage": 0}
+    if not result.data:
+        return {"outage_status": "unknown", "stage": 0}
+    
+    return {
+        "outage_status": result.data["status"],  # remap: cache.status -> outage_status
+        "stage": result.data.get("stage") or 0,
+    }
 
 
 def get_households_in_area(area_id: str) -> list[dict]:
@@ -216,6 +225,24 @@ def get_households_in_area(area_id: str) -> list[dict]:
         .execute()
     )
     return resp.data
+
+# Resolve event
+def resolve_event(household_id: str, event_id: str) -> dict:
+    """Set status='resolved', resolved_at=now() for an owned event."""
+    client = get_client()
+    result = (
+        client.table("events")
+        .update({
+            "status": "resolved",
+            "resolved_at": datetime.utcnow().isoformat(),
+        })
+        .eq("id", event_id)
+        .eq("household_id", household_id)   # ownership guard — never trust URL alone
+        .execute()
+    )
+    if not result.data:
+        return None   # not found or not owned
+    return result.data[0]
 
 def write_notification(household_id: str, message: str, source_area: str) -> None:
     client = get_client()

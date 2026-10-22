@@ -1,0 +1,23 @@
+.controls {
+  width: 100%;
+  background: var(--surface);
+  padding: 1rem 2rem;
+  border: solid 1.25px var(--border);
+  border-radius: 10px;
+}
+
+.controls-label {
+  margin-bottom: 0.5rem;
+}
+
+.controls-buttons {
+  display: flex;
+  gap: 20px;
+}
+
+button {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  text-align: center;
+}

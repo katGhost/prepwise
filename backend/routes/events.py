@@ -4,6 +4,7 @@ from services.impact_engine import EventType
 from services.area_config import resolve_area_id
 from services.notifier import notify_nearby
 from utils.auth_util import require_auth
+from services.supabase_client import resolve_event as db_resolve_event
 
 bp = Blueprint("events", __name__, url_prefix="/api/events")
 VALID_TYPES = {e.value for e in EventType}
@@ -27,11 +28,11 @@ def trigger_event():
     area_id = household.get("area_id") if household else None
 
     # Read from cache (never blocks on ESP API at trigger time)
-    outage_status = supabase_client.get_outage_status(area_id) if area_id else {"status": "unknown", "stage": 0}
+    outage_status = supabase_client.get_outage_status(area_id) if area_id else {"outage_status": "unknown", "stage": 0}
 
     # Create event
     event = supabase_client.create_event(
-        request.household_id, event_type, outage_status["status"], outage_status["stage"]
+        request.household_id, event_type, outage_status["outage_status"], outage_status["stage"]
     )
 
     # Notify nearby households (fire-and-forget, don't fail the response if this errors)
@@ -42,6 +43,20 @@ def trigger_event():
             print(f"[notifier] Failed to notify nearby: {e}")
 
     return jsonify(event), 201
+
+
+@bp.route("/resolve/<event_id>", methods=["POST"])
+@require_auth
+def resolve_event(event_id):
+
+    event = db_resolve_event(
+        household_id=request.household_id,
+        event_id=event_id,
+    )
+    if event is None:
+        return jsonify({"error": "Event not found or not owned by this household"}), 404
+
+    return jsonify(event), 200
 
 
 @bp.get("/debug-whoami")
