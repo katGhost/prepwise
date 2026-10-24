@@ -175,11 +175,17 @@ def get_cached_insight(household_id: str, event_type: str) -> str | None:
     return resp.data[0]["content"] if resp.data else None
 
 
-def save_insight(event_id: str, text: str) -> None:
+def save_insight(household_id: str, event_id: str, content: str):
     client = get_client()
-    if client is None:
-        return
-    client.table("insights").insert({"event_id": event_id, "content": text}).execute()
+    return (
+        client.table("insights")
+        .insert({
+            "household_id": household_id,
+            "event_id": event_id,
+            "content": content,
+        })
+        .execute()
+    )
 
     
 def write_outage_cache(area_id: str, area_name: str, status: str, stage: int, raw: dict | None) -> None:
