@@ -2,145 +2,133 @@
 
 FNB App of the Year Hackathon — Climate Resilience & Essential Services track.
 
-> "Don't just tell me there's an outage — tell me how to prepare."
+> "Don't just tell me there's an outage — tell me what it costs me."
 
-Connects local service disruption alerts (water/electricity) to a household's
-actual budget and spending patterns: what happened → why it matters for your
-money → what to do now.
+Connects local service disruption alerts (water/electricity) to a household's actual budget and spending patterns: what happened → what it costs your household → what to do now.
 
-## Status (MVP build sequence)
-
-- [x] 1. Household profile + budget data model (hardcoded/mock, Supabase schema ready)
-- [x] 2. Impact engine rules for 2 demo scenarios — electricity + water
-      (`backend/services/impact_engine.py`, unit tested: `backend/tests/test_impact_engine.py`)
-- [x] 3. Seeded event trigger + UI feed
-- [x] 4. OpenRouter insight generation, wired to cached fallback
-      (`backend/services/insight_generator.py` — cache-first, never blocks demo on a live call)
-- [ ] 5. Real Eskom national-stage data — enhancement, **do last**, only once 1-4 work end to end live
-
-**End-to-end smoke test passed on mock data**: household → budget → trigger
-event → impact engine → cached insight, all verified working (see commit
-history / re-run `backend/tests/test_impact_engine.py`).
-
-## Run it
-
-### Backend only (fastest loop while building)
-
-```bash
-cd backend
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-cp ../.env.example ../.env   # fill in later; blank is fine, runs on mock data
-FLASK_ENV=development python3 app.py
-# -> http://localhost:8080/api/health
-```
-
-### Frontend dev server (hot reload, proxies /api to Flask above)
-```bash
-cd frontend
-npm install
-npm run dev
-# -> http://localhost:5173
-```
-
-### Full container (what actually ships to Railway)
-```bash
-docker build -t household-resilience .
-docker run -p 8080:8080 --env-file .env household-resilience
-# -> http://localhost:8080
-```
+A Stage 4 load-shedding event on a real PrepWise household projects R378 in additional food spend and R85.50 in electricity costs — calculated from the household's own budget data before the outage ends.
 
 ## Architecture
 
 ```
 household-resilience/
-├── Dockerfile                 # multi-stage: Vite build -> Flask static/
+├── Dockerfile                  # multi-stage: Vite build -> Flask static/
+├── railway.toml                # Railway deploy config
 ├── backend/
 │   ├── app.py                  # Flask app factory, serves API + built frontend
-│   ├── config.py                # all env vars, one place
+│   ├── config.py               # all env vars, one place
+│   ├── scheduler.py            # APScheduler — polls EskomSePush every 3.5h
 │   ├── routes/
-│   │   ├── household.py         # GET profile, budget state
-│   │   ├── events.py            # trigger/list scripted disruption events
-│   │   └── insights.py          # POST -> impact engine + insight generator
+│   │   ├── household.py        # GET profile, budget state, area
+│   │   ├── events.py           # trigger/list/resolve disruption events
+│   │   ├── insights.py         # POST -> impact engine + insight generator
+│   │   ├── notifications.py    # community alerts — read/mark
+│   │   └── areas.py            # area lookup + household area assignment
 │   ├── services/
-│   │   ├── supabase_client.py   # server-side only; in-memory mock fallback
-│   │   ├── impact_engine.py     # pure rule logic — no I/O, fully unit tested
-│   │   └── insight_generator.py # cache-first LLM text, demo-safe by design
+│   │   ├── supabase_client.py  # server-side only, service-role key
+│   │   ├── impact_engine.py    # pure rule logic — no I/O, fully unit tested
+│   │   ├── insight_generator.py# cache-first LLM text, model fallback chain
+│   │   ├── eskomsepush.py      # ESP v3.1 wrapper (allowance + area status)
+│   │   ├── area_config.py      # 6 Tshwane poll areas + adjacency map
+│   │   └── notifier.py         # fan-out community alerts to adjacent areas
 │   └── tests/test_impact_engine.py
-├── frontend/                   # React + Vite, mobile-first single page
-│   └── src/{App.tsx, api.ts, components/, styles.css}
-└── supabase/schema.sql         # schema + seed data matching the mock exactly
+├── frontend/                   # React + Vite TS, mobile-first single page
+│   ├── public/
+│   │   ├── manifest.json       # PWA manifest
+│   │   ├── icon-192x192.png
+│   │   ├── icon-512x512.png
+│   │   └── apple-touch-icon.png
+│   └── src/
+│       ├── App.tsx
+│       ├── api.ts
+│       ├── components/
+│       └── styles.css
+└── supabase/schema.sql         # schema + seed data
 ```
 
-React never talks to Supabase directly — everything goes through Flask with
-the service-role key. The whole app runs on mock data with zero config
-(`SUPABASE_URL` blank, `DEMO_MODE=true`), so it's demoable offline, on a
-clean laptop, from a fresh clone.
+React never talks to Supabase directly — all requests go through Flask with the service-role key. JWT auth uses ES256 (asymmetric), verified via JWKS endpoint.
 
-## Demo script (fill in before demo day — this is the judge-facing narrative)
+## Run it
 
-Household: **The Mahlangu Household** (seeded) — R2500 food budget (R2100
-spent), R1200 electricity budget (R950 spent), R600 household budget (R550
-spent). Already tight on food and household categories — this is
-deliberate, so the demo event visibly matters.
+### Backend only
 
-1. Open the app — calm "ALL NORMAL" status, budget bars shown, nothing alarming.
-2. Hit **⚡ Electricity outage** in demo controls.
-3. Event appears in the feed immediately.
-4. Insight panel reveals: food budget flagged HIGH severity (94% of
-   remaining budget), electricity flagged MODERATE — with plain-language
-   text and one concrete action each ("cook and freeze meals now",
-   "unplug non-essential appliances").
-5. Say the line: *"This isn't just an outage alert — it's the same alert,
-   translated into what it costs you and what to do about it, using your
-   own spending history."*
-6. (Optional, if time) trigger **💧 Water outage** to show the engine
-   generalises to a second disruption type with different affected categories.
+```bash
+cd backend
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+cp ../.env.example ../.env
+FLASK_ENV=development python3 app.py
+# -> http://localhost:8080/api/health
+```
 
-_TODO before demo: swap in real numbers if the seed data changes, time the
-walkthrough, write the 60-second verbal pitch to go with it._
+### Frontend dev server
 
-## Known limitations (be upfront about these in the pitch, don't get caught out)
+```bash
+cd frontend
+npm install
+npm run dev
+# -> http://localhost:5173  (proxies /api to Flask on :8080)
+```
 
-- **Electricity signal**: EskomSePush free tier is paid-only for area lookups
-  and capped at 50 calls/day. MVP uses Eskom's public *national* stage data
-  as the one live signal (coarse), with a scripted local event layered on
-  top for the demo. Hyper-local requires a future partnership — say this
-  explicitly rather than let a judge discover it.
-- **Water signal**: no national real-time water-outage feed exists in SA
-  (fragmented across ~257 municipalities). Scripted/seeded only. Framed in
-  the pitch as "receive," not "detect."
-- **FNB sandbox**: not yet confirmed to exist for this hackathon. Falls back
-  to the realistic mock dataset in `supabase/schema.sql` / `supabase_client.py`.
-- **LLM insight**: cache-first by design (`DEMO_MODE=true`). A live
-  OpenRouter call is wired but reserved for a secondary, lower-stakes
-  feature later — never the main reveal.
+### Full container
 
-## Prep checklist (do regardless of pre-build rule confirmation)
+```bash
+docker build -t prepwise .
+docker run -p 8080:8080 --env-file .env prepwise
+# -> http://localhost:8080
+```
 
-- [ ] Confirm with FNB organizers: can work happen before the 72-hour
-      window, or must it be live-only?
-- [ ] Apply for FNB sandbox access today if it exists (long lead time risk).
-- [ ] Request elevated/partner EskomSePush API access (ZATech Slack,
-      #eskomsepush) today (same lead-time risk).
-- [ ] Get OpenRouter account/key live; test prompt in a scratch file first.
-- [ ] Fill in the demo script above with final numbers and timing.
+## Environment variables
 
-## Judging criteria mapping (for the pitch deck, not just this file)
+| Variable | Required at | Purpose |
+|---|---|---|
+| `SUPABASE_URL` | Runtime + Build | Supabase project URL |
+| `SUPABASE_KEY` | Runtime | Service-role secret key |
+| `VITE_SUPABASE_URL` | Build | Frontend Supabase URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Build | Frontend anon/publishable key |
+| `OPENROUTER_API_KEY` | Runtime | LLM insight generation |
+| `ESKOMSEPUSH_API_KEY` | Runtime | ESP v3.1 outage polling |
+| `DEMO_MODE` | Runtime | `false` = live LLM calls; `true` = template fallback only |
 
-| Criterion | How this MVP answers it |
+## Key design decisions
+
+**Impact engine** (`impact_engine.py`) is pure rule logic with no I/O — category-specific financial impact is projected from the household's actual `spent_amount` and `limit_amount`, not industry averages. No numbers are invented; the LLM is constrained to only reference figures present in the computed output.
+
+**Insight generation** is cache-first: on the first trigger the model runs once and writes to Supabase; every subsequent call for the same household + event type returns instantly from cache with no further LLM cost.
+
+**EskomSePush polling** runs via APScheduler every 3.5 hours (~41 calls/day against a 50/day free-tier limit), warming the `outage_cache` table. Event triggers read from cache — the ESP API is never called at request time.
+
+**Community alerts** fan out to adjacent-area households on every event trigger via `notifier.py`, using a pre-defined Tshwane adjacency map (6 areas across two geographic clusters).
+
+**Auth** is token-gated on every route. Household ID is always read from the verified JWT `sub` claim — never from the request body or URL.
+
+## Known limitations
+
+- **EskomSePush**: free tier is capped at 50 calls/day and covers 6 Tshwane areas only. Hyper-local coverage beyond those areas requires a paid tier or partner access.
+- **Water signal**: no national real-time water-outage feed exists in South Africa (fragmented across ~257 municipalities). Water events are user-triggered; the platform frames this as "report and track," not "auto-detect."
+- **Insight persistence**: insights are linked to a specific event row. A resolved event's insight is retained in Supabase but not currently surfaced in the UI history view.
+
+## Supabase schema
+
+Tables: `households`, `budget_categories`, `events`, `insights`, `outage_cache`, `notifications`.
+
+All tables use UUID PKs with RLS enabled. `households.id` maps 1:1 to `auth.users.id` with cascade delete. Backend uses the service-role key and bypasses RLS entirely — RLS protects direct client access only.
+
+## Demo account
+
+- **Email:** mahlangu@prepwise.com
+- **Household:** The Mahlangu Household
+- **Area:** Hatfield, Tshwane
+- **Budget:** Food R2,100/R2,500 · Electricity R950/R1,200 · Water R320/R500 · Household R550/R600
+
+## Judging criteria
+
+| Criterion | How PrepWise answers it |
 |---|---|
-| Product | Complete flow: budget → alert → impact → recommendation |
-| Creativity | Combines disruption intelligence with personal financial behaviour — nobody else does this (see competitive validation in project notes) |
-| Usability | 3-step contextual reveal: what happened → why it matters → what to do |
-| Sustainability | Impact-engine pattern generalises past electricity/water to transport, food, etc. |
-| Impact | Nudges away from avoidable emergency/reactive spending |
-| Presentation | One-line pitch, calm UI, no alarmism |
-| Intelligence | `impact_engine.py` projects category-specific financial impact from spend history + disruption type — this is the one file judges should see if they ask "where's the AI" |
-
-## Governing principle for any new idea in this project
-
-Not "has this been done before" — ask **why the gap still exists**: can the
-obvious players not close it structurally (no data access, no position), or
-could they close it in a sprint if they decided to? The former is worth
-building. The latter is a weak, contestable gap even if currently true.
+| Product | Complete flow: budget → disruption alert → financial impact → recommendation |
+| Creativity | Combines disruption intelligence with personal financial behaviour — outage alerts translated into rand values using the household's own spending history |
+| Usability | Three-step contextual reveal: what happened → what it costs you → what to do now |
+| Sustainability | Impact engine pattern generalises beyond electricity/water to any budget-affecting disruption type |
+| Impact | Shifts households from reactive emergency spend to informed preparation |
+| Presentation | Calm, civic UI — no alarmism, no dark patterns |
+| Intelligence | `impact_engine.py` projects category-specific financial impact from spend history + disruption type; insight generator constrains the LLM to only the computed figures |
