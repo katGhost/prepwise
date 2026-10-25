@@ -79,6 +79,7 @@ class CategoryImpact:
 class ImpactResult:
     event_type: EventType
     household_id: str
+    event_id: str = ""                 # set by the trigger route after DB insert
     impacts: list = field(default_factory=list)  # list[CategoryImpact]
 
     @property
