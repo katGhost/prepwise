@@ -19,10 +19,16 @@ def generate_insight():
     except ValueError:
         return jsonify({"error": f"invalid event_type: {event_type_raw!r}"}), 400
 
-    household_id = request.household_id  # from token, not body
+    household_id = request.household_id
+
     categories = supabase_client.get_budget_categories(household_id)
     if not categories:
         return jsonify({"error": "no budget data for household"}), 404
+
+    # Fetch the most recent event of this type to get a real event_id for the insight FK
+    events = supabase_client.list_events(household_id)
+    matching = [e for e in events if e.get("type") == event_type_raw]
+    event_id = matching[0]["id"] if matching else None
 
     states = [
         CategoryState(
@@ -34,6 +40,8 @@ def generate_insight():
     ]
 
     result = compute_impact(household_id, event_type, states)
+    result.event_id = event_id or ""   # wire onto ImpactResult before get_insight
+
     insight = get_insight(result)
 
     response = result_to_dict(result)

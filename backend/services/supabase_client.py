@@ -175,17 +175,16 @@ def get_cached_insight(household_id: str, event_type: str) -> str | None:
     return resp.data[0]["content"] if resp.data else None
 
 
-def save_insight(household_id: str, event_id: str, content: str):
+def save_insight(household_id: str, event_id: str, text: str):
     client = get_client()
-    return (
-        client.table("insights")
-        .insert({
+    try:
+        client.table("insights").insert({
             "household_id": household_id,
-            "event_id": event_id,
-            "content": content,
-        })
-        .execute()
-    )
+            "event_id": event_id,          # real UUID FK, not event_type string
+            "content": text,
+        }).execute()
+    except Exception as e:
+        print(f"[supabase] save_insight failed: {e}")
 
     
 def write_outage_cache(area_id: str, area_name: str, status: str, stage: int, raw: dict | None) -> None:
