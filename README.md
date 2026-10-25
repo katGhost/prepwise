@@ -132,3 +132,7 @@ All tables use UUID PKs with RLS enabled. `households.id` maps 1:1 to `auth.user
 | Impact | Shifts households from reactive emergency spend to informed preparation |
 | Presentation | Calm, civic UI — no alarmism, no dark patterns |
 | Intelligence | `impact_engine.py` projects category-specific financial impact from spend history + disruption type; insight generator constrains the LLM to only the computed figures |
+
+## Author
+
+**Andries N Mogashoa** *| Backend AI Engineer Intern @FlyRank.AI | CS50AI & Cybersecurity Student*

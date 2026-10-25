@@ -1,9 +1,18 @@
 # ---- Stage 1: build the React frontend ----
 FROM node:20-slim AS frontend-build
 WORKDIR /app/frontend
+
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_PUBLISHABLE_KEY
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
+
 COPY frontend/package.json ./
 RUN npm install
 COPY frontend/ ./
+COPY backend/ /app/backend/
+RUN npm run build
+
 # Vite config outputs straight into backend/static (see vite.config.ts)
 COPY backend/ /app/backend/
 RUN npm run build
