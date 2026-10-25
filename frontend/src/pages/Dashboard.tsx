@@ -532,7 +532,7 @@ export function Dashboard({
             </div>
 
             {insight ? (
-              <InsightPanel insight={insight} />
+                <InsightPanel insight={insight} impactByCategory={impactByCategory} />
             ) : (
               <div className="content-block">
                 <div className="empty-state-block">
