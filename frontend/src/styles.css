@@ -183,6 +183,40 @@ body {
   color: var(--text);
 }
 
+.insight-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 10px 0 14px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+}
+
+.insight-breakdown-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.insight-breakdown-cat {
+  color: var(--text-secondary, #8a9bb0);
+  text-transform: capitalize;
+}
+
+.insight-breakdown-spend {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.insight-breakdown-remaining {
+  color: var(--text-secondary, #8a9bb0);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* Impact note (budget card detail) */
 
 .impact-note {

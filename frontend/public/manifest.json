@@ -1,0 +1,29 @@
+{
+  "name": "prepWise",
+  "short_name": "prepWise",
+  "description": "Household & Business resilience platform track disruptions, see your real costs, take action.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b141d",
+  "theme_color": "#00d477",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
