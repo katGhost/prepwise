@@ -83,6 +83,7 @@ function AreaSelector({
     const [areas, setAreas] = useState<AreaOption[]>([]);
     const [selected, setSelected] = useState(currentAreaId ?? "");
     const [saving, setSaving] = useState(false);
+    
     const [saved, setSaved] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -97,6 +98,7 @@ function AreaSelector({
 
     // If the stored id isn't a valid option, show the placeholder instead of a blank select
     const value = areas.some((a) => a.id === selected) ? selected : "";
+    const isSaved = !!currentAreaId && value === currentAreaId;
 
     async function handleSave() {
         if (!value) return;
@@ -138,9 +140,9 @@ function AreaSelector({
                 type="button"
                 className="btn-primary"
                 onClick={handleSave}
-                disabled={saving || !value}
+                disabled={saving || !value || isSaved}
             >
-                {saved ? "Saved" : saving ? "Saving…" : "Confirm"}
+                {saving ? "Saving…" : isSaved ? "Saved" : "Confirm"}
             </button>
             {error && <p className="area-error">{error}</p>}
         </div>
